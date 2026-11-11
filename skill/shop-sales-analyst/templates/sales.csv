@@ -1,0 +1,6 @@
+sale_id,sold_at,cashier,payment_method,sku,quantity,unit_price,customer_id,discount
+S1001,2026-10-30 09:14,Aisha,cash,RIC-05,1,,,
+S1001,2026-10-30 09:14,Aisha,cash,SUG-1K,2,,,
+S1002,2026-10-30 11:40,Musa,transfer,OIL-1L,3,3000,,
+S1003,2026-10-31 17:05,Musa,credit,RIC-05,2,,1,
+S1004,31/10/2026 18:20,Aisha,pos,SUG-1K,1,,,

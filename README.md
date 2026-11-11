@@ -67,6 +67,19 @@ sales-agent call low_stock          # call a tool directly — no model, no API 
 sales-agent call top_products --args '{"period": "this_month", "by": "profit", "limit": 5}'
 ```
 
+### Use your own shop's data
+
+Export products and sales from your POS app or spreadsheet as CSV and import them (customers and credit repayments are
+optional). Column formats are in [`skill/shop-sales-analyst/references/csv-format.md`](skill/shop-sales-analyst/references/csv-format.md),
+with ready-to-copy templates next to it.
+
+```bash
+sales-agent import --db data/myshop.db --shop-name "My Shop" --city Bauchi \
+  --products products.csv --sales sales.csv --customers customers.csv --payments payments.csv
+```
+
+Every problem is reported with its file and line number, and nothing is written unless the whole import is valid.
+
 ### Use it from Claude Desktop (or any MCP client)
 
 ```bash
@@ -100,6 +113,13 @@ sales-agent ask "Who owes me the most?" --provider openai --model llama3.1 --bas
 sales-agent ask "Am I losing money on anything?" --json --audit-log audit.jsonl
 ```
 
+### Agent skill
+
+[`skill/shop-sales-analyst`](skill/shop-sales-analyst) is a ready-to-install agent skill (`SKILL.md` plus references)
+that teaches Claude Code, Cursor, Copilot and other agents *when* and *how* to use these tools: which tool answers which
+question, rules against invented numbers, and playbooks for a weekly review, a restock list, debt follow-up with English
+or Hausa reminder drafts, and a margin check.
+
 ## How it works
 
 ```mermaid
@@ -123,7 +143,8 @@ the full trace is available as JSON.
 | `queries.py` | Business logic: periods, aggregation, stock cover, margins, credit balances, reminders. Pure functions returning pydantic models. |
 | `server.py` | MCP server (Python SDK v2 `MCPServer`): tool schemas, read-only annotations, error mapping, audit log, resource and prompt. stdio or Streamable HTTP. |
 | `agent.py` | Tool-use loop; Anthropic Messages API and OpenAI Chat Completions adapters over plain HTTP; a scripted model for tests. |
-| `cli.py` | `seed`, `tools`, `call`, `ask`, `config`. |
+| `cli.py` | `seed`, `import`, `tools`, `call`, `ask`, `config`. |
+| `importer.py` | CSV import with row-level validation (all-or-nothing). |
 | `seed.py` | Deterministic demo data generator. |
 
 ## Demo data
@@ -139,12 +160,14 @@ same schema (`sales-agent call` + `shop://schema` show it) to use real data.
 
 ```bash
 pip install -e ".[dev]"
-pytest -q                     # 57 tests
+pytest -q                     # 63 tests
 ruff check . && mypy sales_agent   # mypy in strict mode
 ```
 
 - **Query correctness:** every reported figure (revenue, profit, credit sales, group breakdowns, rankings, stock cover,
   losses, balances) is recomputed from the raw rows in plain Python and compared.
+- **CSV import:** the templates import and produce hand-checked totals; bad rows are rejected with line numbers and
+  nothing is written; spreadsheet quirks (`₦1,500`, `Card`, `DD/MM/YYYY`, a discount on any row of a receipt) are handled.
 - **Safety:** writes are rejected by the database; bad periods, oversized limits and malformed arguments are refused;
   phone numbers are masked; reminders are never sent.
 - **MCP:** tool listing, schemas and annotations, structured results, error mapping, audit log, resource and prompt —
@@ -164,7 +187,7 @@ CI runs on Python 3.11–3.13 (Linux) and 3.12 (Windows), plus a CLI smoke test 
   claimed here. Add an API key (or a local Ollama model) and run the eval suite to measure a specific model.
 - Built and tested against the MCP Python SDK **v2** (`MCPServer`). It speaks the standard protocol over stdio and
   Streamable HTTP, but I have not tested every MCP client.
-- Single shop, single SQLite database, read-only. Multi-shop data, authentication for the HTTP transport and write
+- Single shop, single SQLite database, read-only. Own data is loaded by CSV import (re-run it to refresh). Multi-shop data, authentication for the HTTP transport and write
   actions with human approval are on the roadmap.
 
 ## Roadmap

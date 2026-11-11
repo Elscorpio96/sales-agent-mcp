@@ -1,0 +1,4 @@
+sku,name,category,price,cost,stock,reorder_level
+RIC-05,Rice 5kg bag,Grains,9200,8300,40,20
+OIL-1L,Groundnut oil 1L,Oil,3100,2650,12,30
+SUG-1K,Sugar 1kg,Baking & sweeteners,1800,1550,60,40
