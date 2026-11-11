@@ -45,6 +45,22 @@ def cmd_seed(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_import(a: argparse.Namespace) -> int:
+    from .importer import CSVImportError, import_csv
+
+    try:
+        s = import_csv(Path(a.db), Path(a.products), Path(a.sales), Path(a.customers) if a.customers else None,
+                       Path(a.payments) if a.payments else None, shop_name=a.shop_name, city=a.city, currency=a.currency, overwrite=a.force)
+    except (CSVImportError, FileExistsError) as e:
+        err.print(f"error: {e}", style="red", markup=False)
+        return 1
+    for w in s.warnings:
+        err.print(f"[yellow]warning:[/] {w}")
+    console.print(f"Imported [bold]{s.sales}[/] sales ({s.line_items} items), {s.products} products, {s.customers} customers and "
+                  f"{s.payments} payments into [bold]{s.db_path}[/]. Data covers {s.first_sale[:10]} to {s.last_sale[:10]}.")
+    return 0
+
+
 def cmd_tools(a: argparse.Namespace) -> int:
     _require_db(a.db)
 
@@ -144,6 +160,16 @@ def build_parser() -> argparse.ArgumentParser:
         return sp
 
     with_db(sub.add_parser("seed", help="create the demo database")).set_defaults(fn=cmd_seed)
+    im = with_db(sub.add_parser("import", help="load your own data from CSV exports"))
+    im.add_argument("--products", required=True, help="products.csv: sku, name, category, price, cost, stock[, reorder_level]")
+    im.add_argument("--sales", required=True, help="sales.csv: sale_id, sold_at, cashier, payment_method, sku, quantity[, unit_price, ...]")
+    im.add_argument("--customers", help="customers.csv: id, name[, phone, language, credit_limit]")
+    im.add_argument("--payments", help="payments.csv: customer_id, paid_at, amount")
+    im.add_argument("--shop-name", default="My shop")
+    im.add_argument("--city", default="")
+    im.add_argument("--currency", default="NGN")
+    im.add_argument("--force", action="store_true", help="replace the database if it exists")
+    im.set_defaults(fn=cmd_import)
     with_db(sub.add_parser("tools", help="list the server's tools")).set_defaults(fn=cmd_tools)
     c = with_db(sub.add_parser("call", help="call one tool directly (no model, no API key)"))
     c.add_argument("tool")
