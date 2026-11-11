@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sales-agent-mcp"
+version = "0.1.0"
+description = "An MCP server and tool-using AI agent that answers a shop owner's questions about sales, stock, margins and customer credit — safely and read-only."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Walid Bello Yakubu" }]
+requires-python = ">=3.11"
+keywords = ["mcp", "model-context-protocol", "ai-agent", "llm", "tool-use", "retail", "analytics", "claude"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "mcp>=2.3,<3",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "rich>=13",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+sales-agent = "sales_agent.cli:main"
+sales-agent-server = "sales_agent.server:main"
+
+[project.urls]
+Repository = "https://github.com/Elscorpio96/sales-agent-mcp"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sales_agent"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 152
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "S108"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
